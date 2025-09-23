@@ -1,0 +1,8 @@
+cmake_minimum_required(VERSION 3.10)
+project(MemorySegments C)
+
+set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wall -Wextra -g")
+
+add_executable(main main.c)
+add_executable(ex2 ex2.c)
+add_executable(ex3 ex3.c)
