@@ -1,7 +1,7 @@
 #include <unistd.h>
 #include <stdio.h>
 #define MAGIC_NUMBER 0x0123456789ABCDEFL
-
+#define NOMBRE_ENORME 1215752191
 typedef struct HEADER_TAG
 {
     struct HEADER_TAG *ptr_next; /* pointe sur le prochain bloc libre */
@@ -10,6 +10,7 @@ typedef struct HEADER_TAG
 } HEADER;
 
 HEADER *freelist = NULL;
+int number_overflow=0;
 
 void *malloc_3is(size_t size)
 {
@@ -48,40 +49,56 @@ void *malloc_3is(size_t size)
         new->magic_number = MAGIC_NUMBER;
         new->bloc_size = size;
         new++;
-        long* magic_ptr=(long*)(void*)new + size;
-        magic_ptr=MAGIC_NUMBER;
-        
+        long* magic_ptr = (long*)((void *)new + size);
+        *magic_ptr = MAGIC_NUMBER;
+
         return (void *)new;
     }
     return NULL;
 }
 
-void free_3is(void* ptr)
+void free_3is(void *ptr)
 {
-    HEADER* new=ptr;
+    if(check_overflow(ptr)) number_overflow=number_overflow+1;
+
+    HEADER *new = ptr;
     new--;
-    if(!freelist){
-        freelist=new;
+    if (!freelist)
+    {
+        freelist = new;
         return;
     }
-    else{
-        new->ptr_next=freelist;
-        freelist=new;
+    else
+    {
+        new->ptr_next = freelist;
+        freelist = new;
         return;
     }
+}
+
+int check_overflow(void *ptr)
+{
+    HEADER *new = ptr;
+    new--;
+    size_t size=new->bloc_size;
+    long* magic_ptr = ((void *)ptr + size);
+    return MAGIC_NUMBER!=*magic_ptr;
 }
 
 int main()
 {
     void *ptr = malloc_3is(4);
-    void *ptr2 = malloc_3is(3);
-    void *ptr3 =malloc_3is(5);
+    int *ptr2 =(int*) malloc_3is(3);
+    void *ptr3 = malloc_3is(5);
     printf("ptr is %p \r\n", ptr);
     printf("ptr2 is %p \r\n", ptr2);
     printf("ptr3 is %p \r\n", ptr3);
-    printf("%d \r\n",freelist!=NULL);
+    printf("%d \r\n", freelist != NULL);
     free_3is(ptr);
-    printf("%d \r\n",freelist!=NULL);
-    printf("size of ptr was %lx \r\n",freelist->bloc_size);
+    printf("Overflow ptr2 ? %d \r\n",check_overflow(ptr2));
+    *ptr2=NOMBRE_ENORME;
+    printf("Overflow ptr2 ? %d \r\n",check_overflow(ptr2));
+    printf("%d \r\n", freelist != NULL);
+    printf("size of ptr was %lx \r\n", freelist->bloc_size);
     printf("%lx \r\n", sizeof(HEADER) + sizeof(MAGIC_NUMBER) + 4);
 }
