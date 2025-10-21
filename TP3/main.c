@@ -33,6 +33,7 @@ void infoSuperblock(struct tosfs_superblock* data){
 
 void infoInode(struct tosfs_inode* inodeStart,int inodeNumber){
     struct tosfs_inode* inode = inodeStart+ inodeNumber;
+    printf("------- info inode %d -------\n",inodeNumber);
     printf("Inode : %d \n" ,inode->inode);
     printf("block no : %d \n" ,inode->block_no);
     printf("Uid : %d \n" ,inode->uid);
@@ -43,12 +44,21 @@ void infoInode(struct tosfs_inode* inodeStart,int inodeNumber){
     printf("nlink : %d \n" ,inode->nlink);
 }
 
+
+void infoDentry(struct tosfs_dentry* dentry){
+    printf("Dentry Inode : %d \n" ,dentry->inode);
+    printf("Dentry name : %s \n" ,dentry->name);
+}
+
 int main(){
     struct tosfs_superblock *data = checkfile("test_tosfs_files");
     infoSuperblock(data);
 
     struct tosfs_inode* inodeStart = ((void*) data + data->block_size);
-    infoInode(inodeStart,2);
+    infoInode(inodeStart,data->root_inode);
+    
 
+    struct tosfs_dentry* dentry = ((void*) data + 4*data->block_size);
+    infoDentry(dentry);
     munmap(data,data->block_size * data->blocks);
 }
