@@ -31,7 +31,7 @@ void infoSuperblock(struct tosfs_superblock* data){
     printf("root_inode : %d \n" ,data->root_inode);
 }
 
-void infoInode(struct tosfs_inode* inodeStart,int inodeNumber){
+int infoInode(struct tosfs_inode* inodeStart,int inodeNumber){
     struct tosfs_inode* inode = inodeStart+ inodeNumber;
     printf("------- info inode %d -------\n",inodeNumber);
     printf("Inode : %d \n" ,inode->inode);
@@ -39,26 +39,35 @@ void infoInode(struct tosfs_inode* inodeStart,int inodeNumber){
     printf("Uid : %d \n" ,inode->uid);
     printf("Gid : %d \n" ,inode->gid);
     printf("Mode : %d \n" ,inode->mode);
-    printf("Perm : %d \n" ,inode->perm);
+    printf("mode is : "PRINTF_BINARY_PATTERN_INT16" \n",PRINTF_BYTE_TO_BINARY_INT16(inode->mode));
+    printf("Perm : %o \n" ,inode->perm);
     printf("size : %d \n" ,inode->size);
     printf("nlink : %d \n" ,inode->nlink);
+    return inode->size;
 }
 
 
-void infoDentry(struct tosfs_dentry* dentry){
-    printf("Dentry Inode : %d \n" ,dentry->inode);
-    printf("Dentry name : %s \n" ,dentry->name);
+void infoDentry(struct tosfs_dentry* dentry,int blocksize){
+    int number_of_dentry= blocksize/sizeof(struct tosfs_dentry);
+    for (int i=0;i<5;i++){
+        printf("Dentry Inode : %d \n" ,dentry->inode);
+        printf("Dentry number : %d \n ", i);
+        printf("Dentry name : %s \n" ,dentry->name);
+        dentry=dentry+1;
+    }
+    printf("sizeofdentry %d \n",sizeof(struct tosfs_dentry));
+    
 }
 
 int main(){
     struct tosfs_superblock *data = checkfile("test_tosfs_files");
     infoSuperblock(data);
 
-    struct tosfs_inode* inodeStart = ((void*) data + data->block_size);
-    infoInode(inodeStart,data->root_inode);
+    struct tosfs_inode* inodeStart =( (void*) data + data->block_size);
+    int inodesize =infoInode(inodeStart,1);
     
 
-    struct tosfs_dentry* dentry = ((void*) data + 4*data->block_size);
-    infoDentry(dentry);
+    char* dentry = ((void*) data + 5*data->block_size);
+    printf("%s",dentry);
     munmap(data,data->block_size * data->blocks);
 }
